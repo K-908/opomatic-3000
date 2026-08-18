@@ -1,0 +1,419 @@
+ARQUITECTURA TÉCNICA DE OPOMATIC-3000
+FASE 3 - DISEÑO INICIAL DEL MVP
+
+
+1. OBJETIVO Y PRINCIPIOS
+
+La arquitectura debe permitir aprender cada parte del sistema, mantener las
+reglas de negocio en un único lugar y entregar funcionalidades pequeñas sin
+introducir infraestructura innecesaria.
+
+Principios:
+
+- Aplicación monolítica modular, no microservicios.
+- Backend y frontend separados durante el desarrollo.
+- Una única base de datos SQL Server.
+- Dependencias orientadas hacia el dominio y los casos de uso.
+- Contratos HTTP distintos de las entidades de persistencia.
+- Validación en frontend por usabilidad y en backend por integridad.
+- Las reglas importantes se cubren con pruebas automatizadas.
+- Solo se añade una abstracción cuando resuelve una necesidad concreta.
+
+
+2. TECNOLOGÍAS ELEGIDAS
+
+Backend:
+
+- .NET 10 LTS y ASP.NET Core Web API.
+- C# con nullable reference types habilitado.
+- Controladores HTTP para que rutas, contratos y códigos de respuesta sean
+  explícitos durante el aprendizaje.
+- Entity Framework Core 10 con el proveedor oficial para SQL Server.
+- Migraciones de EF Core para versionar el esquema.
+- OpenAPI y una interfaz Swagger disponibles en desarrollo.
+- ASP.NET Core Data Protection para proteger el token temporal del test.
+
+Frontend:
+
+- React 19 con TypeScript.
+- Vite como herramienta de desarrollo y compilación.
+- React Router para la navegación de la SPA.
+- fetch encapsulado en un cliente HTTP propio para el MVP.
+- Estado local y useReducer para el test en curso.
+- CSS Modules y variables CSS para estilos y diseño consistente.
+- Vitest y Testing Library para pruebas de componentes.
+- Playwright para un conjunto pequeño de pruebas de extremo a extremo.
+
+Persistencia:
+
+- SQL Server 2019 o posterior.
+- En desarrollo podrá usarse una instancia local, Developer, Express o un
+  contenedor, según las herramientas disponibles en el equipo.
+- Las fechas se guardan en UTC usando datetime2.
+
+Herramientas:
+
+- Git para control de versiones.
+- npm y package-lock.json para dependencias del frontend.
+- dotnet restore y archivos de proyecto para dependencias del backend.
+- Node.js en una versión LTS soportada al crear el proyecto.
+
+Las versiones exactas de paquetes se fijarán en los archivos de proyecto y en
+los lockfiles. No se usarán paquetes preview para el MVP.
+
+
+3. VISTA GENERAL
+
+    Navegador
+        |
+        | HTTPS + JSON
+        v
+    React SPA
+        |
+        | /api
+        v
+    ASP.NET Core API
+        |
+        | casos de uso y reglas
+        v
+    Entity Framework Core
+        |
+        v
+    SQL Server
+
+En desarrollo, Vite y ASP.NET Core se ejecutan en procesos distintos y se
+configura CORS únicamente para el origen local de Vite.
+
+Para una primera publicación se prefiere un único origen: ASP.NET Core puede
+servir los archivos estáticos compilados de React y atender /api. Esto evita
+CORS en producción y simplifica el despliegue.
+
+
+4. ESTRUCTURA PROPUESTA DEL REPOSITORIO
+
+opomatic-3000/
+|-- OpoMatic3000.sln
+|-- backend/
+|   |-- src/
+|   |   |-- OpoMatic3000.Api/
+|   |   |-- OpoMatic3000.Application/
+|   |   |-- OpoMatic3000.Domain/
+|   |   `-- OpoMatic3000.Infrastructure/
+|   `-- tests/
+|       |-- OpoMatic3000.UnitTests/
+|       `-- OpoMatic3000.IntegrationTests/
+|-- frontend/
+|   |-- src/
+|   |-- tests/
+|   `-- package.json
+|-- docs/
+|-- .editorconfig
+|-- .gitignore
+`-- README.md
+
+La documentación de diseño se mantiene en docs/. README.md permanece en la raíz
+como portada e índice del repositorio.
+
+
+5. RESPONSABILIDAD DE LOS PROYECTOS .NET
+
+
+5.1. OpoMatic3000.Domain
+
+Contiene:
+
+- Entidades y relaciones del dominio.
+- Enumeraciones como QuestionResult.
+- Reglas puras de puntuación.
+- Excepciones o resultados propios del dominio cuando aporten claridad.
+
+No depende de Entity Framework, ASP.NET Core ni Infrastructure.
+
+
+5.2. OpoMatic3000.Application
+
+Contiene:
+
+- Casos de uso: crear tema, importar preguntas, generar test, finalizar test,
+  consultar histórico y calcular estadísticas.
+- Modelos de entrada y salida internos.
+- Interfaces necesarias para persistencia, reloj y protección del test.
+- Validaciones de negocio y coordinación de transacciones.
+
+Depende de Domain. No conoce controladores, SQL Server ni componentes React.
+
+
+5.3. OpoMatic3000.Infrastructure
+
+Contiene:
+
+- DbContext y configuraciones de Entity Framework Core.
+- Implementación de persistencia en SQL Server.
+- Migraciones.
+- Consultas de histórico y estadísticas.
+- Implementación del token temporal mediante Data Protection.
+
+Depende de Application y Domain.
+
+No se creará un repositorio genérico encima de EF Core. Las consultas se
+implementarán directamente en servicios concretos o mediante la abstracción
+del contexto que necesiten los casos de uso.
+
+
+5.4. OpoMatic3000.Api
+
+Contiene:
+
+- Controladores y rutas.
+- Contratos JSON de petición y respuesta.
+- Conversión entre contratos HTTP y casos de uso.
+- Configuración de inyección de dependencias, CORS, OpenAPI y errores.
+- Middleware de excepciones y trazabilidad.
+
+Depende de Application y registra Infrastructure en el arranque.
+
+
+5.5. Dirección de dependencias
+
+    Api ------------> Application ------------> Domain
+     |                      ^
+     `----> Infrastructure--'
+
+Domain no depende de ningún otro proyecto propio.
+
+
+6. ORGANIZACIÓN DEL FRONTEND
+
+frontend/src/
+|-- app/
+|   |-- router/
+|   |-- layout/
+|   `-- providers/
+|-- features/
+|   |-- dashboard/
+|   |-- topics/
+|   |-- questions/
+|   |-- test-runner/
+|   |-- attempts/
+|   `-- statistics/
+|-- shared/
+|   |-- api/
+|   |-- components/
+|   |-- hooks/
+|   |-- types/
+|   `-- styles/
+|-- main.tsx
+`-- App.tsx
+
+Cada feature agrupa sus páginas, componentes, tipos y pruebas. shared solo
+contiene elementos realmente reutilizados; no será un cajón para código sin
+responsable.
+
+
+7. RUTAS Y PANTALLAS DEL MVP
+
+    /                       Panel principal
+    /topics                 Administración de temas
+    /questions              Lista y filtros de preguntas
+    /questions/new          Crear pregunta
+    /questions/:id/edit     Editar pregunta
+    /questions/import       Importar JSON
+    /tests/new              Configurar un test
+    /tests/run              Realizar el test temporal
+    /attempts               Historial
+    /attempts/:id           Resultado y revisión
+    /statistics             Estadísticas globales y por tema
+
+/tests/run solo funciona si el estado temporal existe en memoria. Acceder
+directamente o recargar redirige a /tests/new con un aviso de progreso perdido.
+
+
+8. ESTADO Y FLUJO DE DATOS EN REACT
+
+- Los datos persistentes se obtienen siempre desde la API.
+- Un módulo apiClient centraliza URL base, cabeceras, JSON, cancelación y
+  conversión de Problem Details a errores de interfaz.
+- Las páginas mantienen estados explícitos: loading, success, empty y error.
+- El test generado se conserva en memoria mediante un contexto limitado a la
+  feature y useReducer.
+- El reducer mantiene pregunta actual, respuestas por questionId, token y
+  submissionId.
+- No se usa localStorage ni sessionStorage para el test en el MVP.
+- beforeunload advierte al cerrar o recargar mientras exista un test activo.
+- Un bloqueo de navegación interno pide confirmación al abandonar la ruta.
+- La API, no React, determina aciertos, fallos y nota.
+
+No se añadirá una biblioteca global de estado hasta que aparezca una necesidad
+que el estado local y el contexto de feature no resuelvan bien.
+
+
+9. TOKEN TEMPORAL DEL TEST
+
+El token permite verificar qué preguntas y qué orden generó el servidor sin
+crear una fila de test en curso.
+
+Contenido lógico protegido:
+
+- Versión del formato.
+- Fecha de generación y caducidad.
+- Temas seleccionados.
+- Identificadores y orden de preguntas.
+- Identificadores y orden de opciones.
+
+Propiedades:
+
+- Está cifrado y autenticado mediante ASP.NET Core Data Protection.
+- React lo trata como texto opaco y lo devuelve al finalizar.
+- Caduca a las 12 horas.
+- No contiene el progreso ni respuestas seleccionadas.
+- No permite reanudar tras recargar la página.
+- Las claves de Data Protection deben persistir fuera del proceso en cualquier
+  despliegue real para que reiniciar la API no invalide tokens prematuramente.
+
+
+10. PERSISTENCIA Y TRANSACCIONES
+
+- EF Core configura nombres, longitudes, precisión, claves, índices y reglas de
+  borrado mediante Fluent API.
+- Las entidades históricas no se modifican después de guardar el intento.
+- Crear o editar una pregunta y sus opciones usa una transacción.
+- Importar un JSON completo usa una transacción: todo o nada.
+- Finalizar un test guarda intento, temas, preguntas y opciones históricas en
+  una transacción.
+- submissionId tiene un índice único para que reintentar una entrega no cree
+  duplicados.
+- Las migraciones se versionan en Git; nunca se edita manualmente una migración
+  ya aplicada a un entorno compartido.
+- El esquema se crea o actualiza mediante migraciones, no con EnsureCreated.
+
+
+11. VALIDACIÓN
+
+Frontend:
+
+- Campos obligatorios, longitudes, formato y confirmaciones para respuesta
+  inmediata.
+- Los errores del backend siguen mostrándose aunque el frontend haya validado.
+
+Backend:
+
+- Forma del contrato HTTP.
+- Existencia y estado de entidades relacionadas.
+- Reglas de cuatro opciones y una correcta.
+- Límites de importación y generación.
+- Pertenencia de opciones a preguntas.
+- Integridad del token y unicidad de submissionId.
+- Todas las reglas de puntuación.
+
+Base de datos:
+
+- Claves, índices únicos, foreign keys y check constraints como última barrera.
+
+
+12. ERRORES, LOGS Y OBSERVABILIDAD
+
+- Problem Details es el único formato de error HTTP.
+- Un middleware convierte excepciones conocidas en 400, 404 o 409.
+- Los errores inesperados devuelven 500 sin stack trace al cliente.
+- Los logs incluyen traceId, ruta, duración y resultado, pero nunca cadenas de
+  conexión ni el contenido completo de importaciones.
+- Se utiliza ILogger y configuración por entorno.
+- GET /health comprueba que la API está viva; una comprobación separada puede
+  verificar SQL Server para diagnóstico.
+
+
+13. CONFIGURACIÓN Y SECRETOS
+
+- appsettings.json contiene valores no sensibles.
+- appsettings.Development.json contiene configuración local no secreta.
+- La cadena de conexión se suministra con .NET User Secrets en desarrollo y
+  mediante variables de entorno o el almacén de secretos del hosting fuera de
+  desarrollo.
+- .env locales del frontend no se versionan.
+- Solo las variables de Vite con prefijo VITE_ llegan al navegador y nunca
+  contienen secretos.
+- El repositorio incluye archivos .example cuando ayuden a configurar el
+  entorno sin revelar credenciales.
+
+
+14. SEGURIDAD Y LÍMITE DE DESPLIEGUE
+
+El MVP no tiene autenticación. Por ello:
+
+- Puede ejecutarse en el equipo local o en una red privada controlada.
+- No debe exponerse públicamente a Internet: cualquiera podría leer o modificar
+  datos mediante la API.
+- Antes de un despliegue público se debe añadir autenticación, autorización,
+  protección frente a abuso y una revisión específica de seguridad.
+- HTTPS se utiliza siempre fuera del desarrollo estrictamente local.
+- CORS en desarrollo permite solo el origen concreto de Vite.
+
+
+15. ESTRATEGIA DE PRUEBAS
+
+Pruebas unitarias del backend:
+
+- Fórmula de puntuación, incluidos resultados negativos y decimales.
+- Validación de preguntas e importaciones.
+- Selección sin duplicados.
+- Ranking y porcentajes sin división entre cero.
+
+Pruebas de integración del backend:
+
+- Endpoints y Problem Details.
+- Mapeo y restricciones reales de SQL Server.
+- Transacciones de importación y finalización.
+- Idempotencia con submissionId.
+- Histórico inmutable después de editar preguntas.
+
+Pruebas del frontend:
+
+- Formularios, validaciones y estados vacíos/error.
+- Navegación y conservación de respuestas en memoria.
+- Confirmación de finalización y progreso perdido.
+- Presentación de resultados históricos.
+
+Pruebas E2E mínimas:
+
+1. Crear tema y pregunta.
+2. Generar y completar un test.
+3. Revisar el intento guardado.
+4. Ver que las estadísticas se actualizan.
+
+
+16. EXPERIENCIA DE USUARIO Y ACCESIBILIDAD
+
+- Diseño visual sobrio, legible y orientado a sesiones largas de estudio.
+- Navegación principal consistente.
+- HTML semántico y funcionamiento completo con teclado.
+- Etiquetas asociadas a controles y foco visible.
+- El resultado no se comunica solo mediante color: incluye texto o iconos.
+- Contraste suficiente y tamaños de interacción cómodos.
+- Confirmación antes de finalizar, desactivar o abandonar un test.
+- El diseño será responsive desde la estructura, aunque el pulido móvil
+  completo no sea criterio de cierre del MVP.
+
+
+17. DEFINICIÓN ARQUITECTÓNICA DE TERMINADO
+
+Una funcionalidad está integrada cuando:
+
+- Cumple sus criterios de aceptación.
+- Backend y frontend usan el contrato documentado.
+- La validación existe en el backend y, cuando ayuda, en el frontend.
+- Incluye pruebas proporcionales al riesgo.
+- No introduce secretos ni errores sensibles en logs o respuestas.
+- La migración correspondiente funciona desde una base vacía.
+- OpenAPI y los documentos afectados están actualizados.
+- Compilación, análisis y pruebas finalizan correctamente.
+
+
+18. REFERENCIAS OFICIALES CONSULTADAS
+
+- Política de soporte de .NET:
+  https://dotnet.microsoft.com/en-us/platform/support/policy
+- Instalación y creación de aplicaciones React:
+  https://react.dev/learn/installation
+  https://react.dev/learn/creating-a-react-app
+- Proveedor de Entity Framework Core para SQL Server:
+  https://learn.microsoft.com/ef/core/providers/sql-server/

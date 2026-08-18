@@ -1,0 +1,382 @@
+DISEÑO DE BASE DE DATOS DE OPOMATIC-3000
+FASE 3 - DISEÑO INICIAL APROBADO
+
+
+1. OBJETIVO
+
+Diseñar el modelo relacional de SQL Server necesario para gestionar temas,
+preguntas, opciones, intentos finalizados, revisión histórica y estadísticas.
+
+El MVP está destinado a un único usuario y no guarda tests en curso. Por ese
+motivo, este modelo no incluye inicialmente tablas de usuarios ni de sesiones
+de test sin finalizar.
+
+
+2. RELACIONES PRINCIPALES
+
+Tema 1 ---- N Pregunta 1 ---- 4 Opción
+
+Intento 1 ---- N TemaIntento
+
+Intento 1 ---- N PreguntaIntento 1 ---- 4 OpciónIntento
+
+- Las tablas Tema, Pregunta y Opción contienen el banco de preguntas actual.
+- TemaIntento conserva los temas seleccionados al configurar cada test.
+- Las tablas Intento, PreguntaIntento y OpciónIntento conservan el histórico.
+- PreguntaIntento y OpciónIntento guardan una copia de los textos utilizados.
+  Así, editar una pregunta posteriormente no modifica un examen antiguo.
+
+
+3. TABLAS PROPUESTAS
+
+
+3.1. Tema (Topics)
+
+Id
+    int, clave primaria, identidad.
+
+Name
+    nvarchar(150), obligatorio.
+    Nombre único del tema.
+
+IsActive
+    bit, obligatorio, valor inicial 1.
+    Los temas usados históricamente se desactivan en lugar de eliminarse.
+
+CreatedAtUtc
+    datetime2, obligatorio.
+
+UpdatedAtUtc
+    datetime2, obligatorio.
+
+Restricciones e índices:
+
+- Clave primaria sobre Id.
+- Restricción única sobre Name.
+- Índice sobre IsActive para consultar los temas disponibles.
+
+
+3.2. Pregunta (Questions)
+
+Id
+    int, clave primaria, identidad.
+
+TopicId
+    int, obligatorio, clave foránea a Topics.Id.
+
+Statement
+    nvarchar(max), obligatorio.
+    Enunciado de la pregunta.
+
+IsActive
+    bit, obligatorio, valor inicial 1.
+
+CreatedAtUtc
+    datetime2, obligatorio.
+
+UpdatedAtUtc
+    datetime2, obligatorio.
+
+Restricciones e índices:
+
+- Clave primaria sobre Id.
+- La eliminación física del tema queda restringida mientras tenga preguntas.
+- Índice compuesto sobre TopicId e IsActive para generar tests por tema.
+- Se permiten enunciados iguales, porque podrían ser preguntas válidas de temas
+  diferentes o formulaciones repetidas deliberadamente.
+
+
+3.3. Opción (QuestionOptions)
+
+Id
+    int, clave primaria, identidad.
+
+QuestionId
+    int, obligatorio, clave foránea a Questions.Id.
+
+Text
+    nvarchar(1000), obligatorio.
+
+Position
+    tinyint, obligatorio, con valores del 1 al 4.
+    Representa el orden de edición, no necesariamente el orden del test.
+
+IsCorrect
+    bit, obligatorio.
+
+Restricciones e índices:
+
+- Clave primaria sobre Id.
+- Clave única compuesta sobre QuestionId y Position.
+- Comprobación de que Position está entre 1 y 4.
+- La pregunta y sus cuatro opciones se crean o modifican en una única
+  transacción.
+- La aplicación debe garantizar que cada pregunta tenga exactamente cuatro
+  opciones y solo una correcta. Estas dos reglas afectan a varias filas y se
+  validarán en la lógica de negocio, además de mediante pruebas automatizadas.
+
+
+3.4. Intento finalizado (TestAttempts)
+
+Id
+    bigint, clave primaria, identidad.
+
+SubmissionId
+    uniqueidentifier, obligatorio.
+    Identificador generado por React para hacer idempotente la entrega. Una
+    misma entrega no puede crear dos intentos.
+
+CompletedAtUtc
+    datetime2, obligatorio.
+    Fecha de finalización asignada por el servidor.
+
+TotalQuestions
+    int, obligatorio y mayor que cero.
+
+CorrectCount
+    int, obligatorio y mayor o igual que cero.
+
+IncorrectCount
+    int, obligatorio y mayor o igual que cero.
+
+UnansweredCount
+    int, obligatorio y mayor o igual que cero.
+
+Score
+    decimal(9,6), obligatorio.
+    Conserva la nota calculada con precisión; la interfaz la muestra con dos
+    decimales.
+
+ScoringRuleVersion
+    smallint, obligatorio, valor inicial 1.
+    Permite saber con qué regla se calculó un resultado si la fórmula cambia en
+    el futuro.
+
+Restricciones e índices:
+
+- Clave primaria sobre Id.
+- Restricción única sobre SubmissionId.
+- Comprobación de TotalQuestions > 0.
+- Comprobación de contadores no negativos.
+- Comprobación de que:
+
+      CorrectCount + IncorrectCount + UnansweredCount = TotalQuestions
+
+- Comprobación de que Score está entre -2,5 y 10.
+- Índice descendente sobre CompletedAtUtc para mostrar el historial reciente.
+- Solo se inserta un intento cuando se finaliza el test. La inserción del
+  intento y de todo su detalle se realiza en una única transacción.
+
+
+3.5. Tema seleccionado en el intento (TestAttemptTopics)
+
+TestAttemptId
+    bigint, obligatorio, clave foránea a TestAttempts.Id.
+
+OriginalTopicId
+    int, obligatorio, clave foránea a Topics.Id.
+
+TopicNameSnapshot
+    nvarchar(150), obligatorio.
+    Conserva el nombre que tenía el tema cuando se realizó el test.
+
+Restricciones e índices:
+
+- Clave primaria compuesta por TestAttemptId y OriginalTopicId.
+- Un mismo tema no puede aparecer dos veces en el mismo intento.
+- Se guarda un registro por cada tema seleccionado al configurar el test,
+  aunque finalmente el reparto aleatorio no incluya preguntas de alguno de
+  ellos.
+- Esta tabla describe el alcance elegido para el test. Las estadísticas de
+  rendimiento se calculan desde las preguntas realmente presentadas.
+
+
+3.6. Pregunta histórica del intento (TestAttemptQuestions)
+
+Id
+    bigint, clave primaria, identidad.
+
+TestAttemptId
+    bigint, obligatorio, clave foránea a TestAttempts.Id.
+
+OriginalQuestionId
+    int, obligatorio, clave foránea a Questions.Id.
+    Permite relacionar el histórico con la pregunta original.
+
+OriginalTopicId
+    int, obligatorio, clave foránea a Topics.Id.
+    Se utiliza para calcular estadísticas por tema.
+
+DisplayOrder
+    int, obligatorio y mayor que cero.
+
+StatementSnapshot
+    nvarchar(max), obligatorio.
+
+TopicNameSnapshot
+    nvarchar(150), obligatorio.
+
+Result
+    tinyint, obligatorio:
+    0 = sin contestar, 1 = acertada, 2 = fallada.
+
+Restricciones e índices:
+
+- Clave primaria sobre Id.
+- Clave única compuesta sobre TestAttemptId y DisplayOrder.
+- Clave única compuesta sobre TestAttemptId y OriginalQuestionId, para impedir
+  que una pregunta se repita dentro del mismo test.
+- Comprobación de que Result sea 0, 1 o 2.
+- Índice sobre OriginalTopicId para las estadísticas por tema.
+- La combinación TestAttemptId y OriginalTopicId debe existir en
+  TestAttemptTopics. Así se garantiza que toda pregunta pertenece a uno de los
+  temas seleccionados para el test.
+- Las referencias originales no sustituyen a las copias de texto: ambas se
+  conservan para asegurar el histórico y permitir estadísticas.
+
+
+3.7. Opción histórica del intento (TestAttemptOptions)
+
+Id
+    bigint, clave primaria, identidad.
+
+TestAttemptQuestionId
+    bigint, obligatorio, clave foránea a TestAttemptQuestions.Id.
+
+OriginalOptionId
+    int, obligatorio, clave foránea a QuestionOptions.Id.
+
+TextSnapshot
+    nvarchar(1000), obligatorio.
+
+DisplayOrder
+    tinyint, obligatorio, con valores del 1 al 4.
+    Conserva el orden aleatorio mostrado durante ese intento.
+
+IsCorrect
+    bit, obligatorio.
+
+IsSelected
+    bit, obligatorio.
+
+Restricciones e índices:
+
+- Clave primaria sobre Id.
+- Clave única compuesta sobre TestAttemptQuestionId y DisplayOrder.
+- Clave única compuesta sobre TestAttemptQuestionId y OriginalOptionId.
+- Comprobación de que DisplayOrder esté entre 1 y 4.
+- La aplicación garantiza que existen exactamente cuatro opciones, exactamente
+  una correcta y como máximo una seleccionada por pregunta histórica.
+
+
+4. DECISIONES DE MODELADO
+
+
+4.1. No existe una tabla Test separada
+
+En el MVP no se crean plantillas de test ni se guardan tests en curso. React
+mantiene temporalmente las preguntas y respuestas mientras se realiza el test.
+Al finalizar, el backend valida las selecciones, calcula la nota y guarda un
+TestAttempt completo.
+
+
+4.2. Los resultados históricos utilizan instantáneas
+
+Guardar solo el identificador de la pregunta no sería suficiente: si después se
+edita el enunciado o una opción, la revisión de un examen antiguo mostraría un
+contenido distinto. Por ello se guardan StatementSnapshot, TopicNameSnapshot y
+TextSnapshot.
+
+
+4.3. Las estadísticas no necesitan tablas acumuladas
+
+Para el volumen de uso previsto, las estadísticas se calculan desde
+TestAttemptQuestions. Evitamos duplicar totales que podrían quedar
+desincronizados. Si en el futuro el volumen lo exige, se podrán añadir vistas o
+resúmenes sin cambiar el significado del modelo.
+
+
+4.4. Desactivación en lugar de borrado físico
+
+Topics y Questions usan IsActive. Los elementos inactivos no participan en la
+generación de nuevos tests, pero siguen disponibles para el histórico y las
+estadísticas.
+
+
+4.5. Los fallos y las preguntas en blanco no se guardan en arrays
+
+Cada fila de TestAttemptQuestions ya identifica la pregunta original, su tema y
+su resultado:
+
+    Result = 0 -> sin contestar
+    Result = 1 -> acertada
+    Result = 2 -> fallada
+
+Por tanto, una lista de preguntas falladas o sin contestar se obtiene filtrando
+estas filas. TestAttemptOptions indica además qué opción se seleccionó.
+
+Guardar los mismos identificadores en arrays dentro de TestAttempts duplicaría
+la información y podría generar contradicciones: una pregunta podría figurar
+como fallada en el array y como acertada en su fila histórica. También haría
+más difíciles las relaciones, los índices y las consultas de SQL Server.
+
+Para detectar preguntas difíciles se agruparán las filas por
+OriginalQuestionId y se contarán sus resultados fallados y sin contestar. De
+esta forma podrá definirse más adelante cualquier criterio de dificultad sin
+cambiar el almacenamiento histórico.
+
+
+5. JSON DE IMPORTACIÓN
+
+El JSON representa los datos que el usuario proporciona, no la estructura
+física exacta de SQL Server. No debe incluir Id, claves foráneas, IsActive,
+fechas de auditoría ni columnas históricas.
+
+Formato inicial propuesto:
+
+{
+  "topics": [
+    {
+      "name": "Tema 1",
+      "questions": [
+        {
+          "statement": "Texto de la pregunta",
+          "options": [
+            "Primera opción",
+            "Segunda opción",
+            "Tercera opción",
+            "Cuarta opción"
+          ],
+          "correctOption": 2
+        }
+      ]
+    }
+  ]
+}
+
+correctOption utiliza posiciones de 1 a 4. En el ejemplo, la segunda opción es
+la correcta.
+
+Comportamiento propuesto:
+
+- Si un tema no existe, se crea.
+- Si un tema existe y está activo, se reutiliza.
+- Si un tema existe pero está inactivo, la importación se rechaza y se informa
+  del conflicto; no se reactiva automáticamente.
+- Primero se valida el archivo completo.
+- Si cualquier dato es inválido, no se guarda nada.
+- Si todo es válido, temas, preguntas y opciones se guardan en una única
+  transacción.
+
+
+6. ASPECTOS QUE SE CONCRETARÁN EN EL DISEÑO TÉCNICO
+
+- Nombres definitivos de tablas y columnas en el código.
+- Configuración de Entity Framework Core.
+- Migración inicial de la base de datos.
+- Índices adicionales basados en las consultas reales.
+- La comparación de nombres de temas ignorará mayúsculas, minúsculas y espacios
+  exteriores, apoyándose en normalización de la aplicación y una restricción
+  única compatible en SQL Server.
+- El límite inicial es de 200 preguntas por test y 2.000 preguntas por archivo
+  de importación, revisable si el uso real lo requiere.

@@ -1,0 +1,412 @@
+PLAN DE IMPLEMENTACIÓN DE OPOMATIC-3000
+VERSIÓN INICIAL (MVP)
+
+
+1. OBJETIVO
+
+Construir la aplicación por entregas pequeñas, ejecutables y comprobables. El
+plan prioriza aprender cómo se conectan React, ASP.NET Core y SQL Server.
+
+No se desarrollará primero todo el backend y después todo el frontend. Tras la
+preparación inicial, cada funcionalidad recorrerá las capas necesarias y se
+probará antes de comenzar la siguiente.
+
+
+ESTADO ACTUAL
+
+- Entrega 0: completada el 18 de agosto de 2026.
+- Entrega 1: completada el 18 de agosto de 2026. Incluye Problem Details, CORS
+  de desarrollo, cliente HTTP tipado, comunicación visible React -> API y
+  pruebas automatizadas de frontend e integración.
+- Siguiente entrega: Entrega 2, modelo de datos y migración inicial.
+
+El desglose ejecutable de cada entrega se mantiene en `tareas/README.md`.
+
+
+2. FORMA DE TRABAJO
+
+Para cada entrega:
+
+1. Revisar la historia de usuario y los criterios de aceptación.
+2. Explicar los conceptos nuevos antes de usarlos.
+3. Dividir la entrega en cambios pequeños.
+4. Implementar primero la regla o caso de uso central.
+5. Añadir persistencia y endpoint cuando corresponda.
+6. Construir la interfaz que consume el endpoint.
+7. Probar los casos normales, límites y errores.
+8. Revisar manualmente el recorrido completo.
+9. Actualizar documentación si el comportamiento real cambia.
+10. Crear un commit coherente cuando la entrega esté estable.
+
+No se comienza una funcionalidad dependiente si la anterior no compila o tiene
+pruebas esenciales fallando.
+
+
+3. ENTREGA 0 - PREPARAR EL ENTORNO Y EL REPOSITORIO
+
+Resultado visible:
+
+- Repositorio organizado y herramientas verificadas.
+
+Trabajo:
+
+- Comprobar Git.
+- Instalar o verificar .NET 10 SDK.
+- Instalar o verificar una versión LTS de Node.js y npm.
+- Instalar o verificar SQL Server y una herramienta de administración.
+- Crear .gitignore y .editorconfig.
+- Crear la estructura backend/, frontend/ y docs/.
+- Verificar que la documentación está organizada en docs/ y sus referencias
+  funcionan.
+- Crear README.md con requisitos y comandos todavía provisionales.
+- Registrar las versiones reales de SDK y herramientas.
+
+Verificación:
+
+- dotnet --info funciona.
+- node --version y npm --version funcionan.
+- Se puede conectar a la instancia local de SQL Server.
+- git status solo muestra los archivos esperados.
+
+
+4. ENTREGA 1 - ESQUELETO EJECUTABLE
+
+Historias relacionadas: base técnica para todas.
+
+Resultado visible:
+
+- React muestra una página inicial.
+- React consulta a la API y muestra que está disponible.
+
+Backend:
+
+- Crear OpoMatic3000.sln y los cuatro proyectos de src.
+- Configurar referencias entre proyectos.
+- Crear GET /health.
+- Configurar Problem Details, OpenAPI, logging y CORS de desarrollo.
+- Añadir pruebas unitarias e integración vacías pero ejecutables.
+
+Frontend:
+
+- Crear React + TypeScript con Vite.
+- Configurar router, layout general y apiClient.
+- Crear navegación inicial y página principal provisional.
+- Mostrar estados loading, success y error al consultar /health.
+- Configurar Vitest y Testing Library.
+
+Verificación:
+
+- Backend y frontend arrancan con comandos documentados.
+- La llamada frontend -> API funciona.
+- OpenAPI se puede consultar.
+- Todas las pruebas iniciales pasan.
+
+
+5. ENTREGA 2 - MODELO DE DATOS Y MIGRACIÓN INICIAL
+
+Historias relacionadas: HU-01 a HU-10 como base de persistencia.
+
+Resultado visible:
+
+- SQL Server contiene el esquema inicial creado por EF Core.
+
+Trabajo:
+
+- Crear entidades y enumeraciones del dominio.
+- Implementar DbContext y configuraciones Fluent API.
+- Añadir submissionId único a TestAttempts.
+- Configurar claves, relaciones, índices, precisión y check constraints.
+- Configurar la cadena de conexión mediante User Secrets.
+- Crear y aplicar la primera migración.
+- Añadir una prueba de integración que cree la base y valide relaciones
+  esenciales.
+
+Verificación:
+
+- Una base vacía se crea únicamente mediante migraciones.
+- Las restricciones impiden estados básicos inválidos.
+- No hay credenciales versionadas.
+
+
+6. ENTREGA 3 - GESTIÓN DE TEMAS
+
+Historia: HU-01.
+
+Resultado visible:
+
+- Crear, listar, editar, desactivar y reactivar temas desde React.
+
+Backend:
+
+- Casos de uso y validaciones de temas.
+- Endpoints de /api/topics.
+- Normalización del nombre y control de duplicados.
+- Exclusión de todas sus preguntas mientras el tema esté inactivo, sin cambiar
+  el estado individual de cada pregunta.
+
+Frontend:
+
+- Pantalla /topics.
+- Formulario de creación y edición.
+- Indicadores de activo/inactivo.
+- Confirmación antes de desactivar.
+- Estados vacío, carga y error.
+
+Pruebas clave:
+
+- Nombre obligatorio y único sin distinguir mayúsculas.
+- Editar un tema inexistente devuelve 404.
+- Las preguntas de un tema inactivo no pueden usarse para generar tests y
+  recuperan su disponibilidad al reactivar el tema si siguen activas.
+- React presenta correctamente errores de validación.
+
+
+7. ENTREGA 4 - GESTIÓN MANUAL DE PREGUNTAS
+
+Historia: HU-02.
+
+Resultado visible:
+
+- Crear, buscar, filtrar, editar y desactivar preguntas.
+
+Backend:
+
+- Endpoints de /api/questions.
+- Paginación, filtro por tema, estado y búsqueda textual.
+- Transacción de pregunta y cuatro opciones.
+- Validación de exactamente cuatro opciones y una correcta.
+
+Frontend:
+
+- Lista paginada /questions.
+- Formularios /questions/new y /questions/:id/edit.
+- Cuatro campos de opción y selector de respuesta correcta.
+- Filtros por tema y estado.
+
+Pruebas clave:
+
+- No se guarda una pregunta inválida.
+- No se activa una pregunta de un tema inactivo.
+- Editar conserva los identificadores de sus cuatro opciones.
+- Las listas respetan filtros y paginación.
+
+
+8. ENTREGA 5 - IMPORTACIÓN JSON
+
+Historia: HU-03.
+
+Resultado visible:
+
+- Seleccionar un JSON, validarlo e importar preguntas masivamente.
+
+Backend:
+
+- Contrato de /api/questions/import.
+- Límites de tamaño y cantidad.
+- Validación completa con rutas de error precisas.
+- Creación o reutilización de temas activos.
+- Transacción de todo o nada.
+
+Frontend:
+
+- Pantalla /questions/import.
+- Selector de archivo y vista previa de nombre/tamaño.
+- Mensajes de validación por ruta.
+- Resumen de temas creados/reutilizados y preguntas importadas.
+- Enlace para descargar o copiar un ejemplo válido.
+
+Pruebas clave:
+
+- Un único error impide toda la importación.
+- Un tema inactivo produce conflicto.
+- Se respetan los límites.
+- Un archivo correcto crea todas las filas esperadas.
+
+
+9. ENTREGA 6 - GENERACIÓN DEL TEST
+
+Historia: HU-04.
+
+Resultado visible:
+
+- Seleccionar temas y cantidad, y comenzar un test aleatorio.
+
+Backend:
+
+- Caso de uso de selección aleatoria sin repetidos.
+- Barajado de preguntas y opciones.
+- Protección y caducidad de testToken.
+- POST /api/tests/generate sin exponer isCorrect.
+
+Frontend:
+
+- Pantalla /tests/new.
+- Selección múltiple de temas.
+- Campo de número de preguntas y disponibilidad visible.
+- Gestión del error por preguntas insuficientes.
+- Inicialización del estado temporal del test.
+
+Pruebas clave:
+
+- Solo aparecen temas y preguntas activos seleccionados.
+- No hay preguntas repetidas.
+- Cada pregunta tiene cuatro opciones barajadas.
+- La respuesta no revela la opción correcta.
+- Un token alterado no puede utilizarse.
+
+
+10. ENTREGA 7 - REALIZACIÓN, CORRECCIÓN Y GUARDADO
+
+Historias: HU-05 y HU-06.
+
+Resultado visible:
+
+- Completar un test, entregarlo y ver la nota.
+
+Backend:
+
+- Regla de puntuación con decimal.
+- Validación del token y de las selecciones.
+- POST /api/tests/finish.
+- Creación transaccional de todas las instantáneas históricas.
+- Idempotencia mediante submissionId.
+
+Frontend:
+
+- Pantalla /tests/run.
+- Navegación anterior/siguiente y mapa de preguntas.
+- Seleccionar, cambiar o limpiar una respuesta.
+- Resumen de contestadas y pendientes.
+- Confirmación antes de finalizar.
+- Aviso al abandonar o recargar.
+- Redirección al resultado después de guardar.
+
+Pruebas clave:
+
+- Acierto suma 10/N y fallo resta (10/N)*0,25.
+- Pregunta en blanco no suma ni resta.
+- Se permiten notas negativas.
+- No hay redondeos intermedios y se muestran dos decimales.
+- Repetir una entrega no duplica el intento.
+- Una opción ajena a la pregunta se rechaza.
+
+
+11. ENTREGA 8 - HISTORIAL Y REVISIÓN
+
+Historias: HU-07 y HU-08.
+
+Resultado visible:
+
+- Consultar intentos anteriores y revisar cada respuesta.
+
+Backend:
+
+- GET /api/attempts paginado.
+- GET /api/attempts/{id} con instantáneas históricas.
+
+Frontend:
+
+- Pantalla /attempts ordenada por fecha descendente.
+- Resumen de nota, temas y contadores.
+- Pantalla /attempts/:id con estados acertada/fallada/sin contestar.
+- Respuesta seleccionada y correcta identificadas con texto además de color.
+
+Pruebas clave:
+
+- Editar o desactivar una pregunta no cambia un intento anterior.
+- Los temas seleccionados quedan visibles.
+- La revisión no permite modificar el histórico.
+
+
+12. ENTREGA 9 - ESTADÍSTICAS
+
+Historias: HU-09 y HU-10.
+
+Resultado visible:
+
+- Panel con actividad, precisión global y ranking por tema.
+
+Backend:
+
+- GET /api/statistics/summary.
+- GET /api/statistics/topics.
+- Consultas agregadas desde TestAttemptQuestions.
+- Tratamiento de conjuntos vacíos y empates.
+
+Frontend:
+
+- Resumen en / y detalle en /statistics.
+- Totales globales.
+- Tabla de temas con volumen y porcentaje.
+- Ranking mejor/peor con contexto suficiente.
+- Estado "Sin datos" cuando corresponda.
+
+Pruebas clave:
+
+- Las preguntas sin contestar no cuentan como contestadas.
+- Porcentaje = aciertos / (aciertos + fallos) * 100.
+- No hay divisiones entre cero.
+- Los empates siguen el orden documentado.
+- Temas inactivos con histórico siguen apareciendo.
+
+
+13. ENTREGA 10 - CIERRE DEL MVP
+
+Resultado visible:
+
+- Versión inicial coherente, probada y utilizable localmente.
+
+Trabajo:
+
+- Revisar todos los criterios de aceptación de requisitos.txt.
+- Completar el recorrido E2E principal.
+- Revisar teclado, foco, etiquetas, contraste y mensajes.
+- Probar tamaños de pantalla habituales.
+- Revisar logs y respuestas para evitar datos sensibles.
+- Ejecutar migraciones desde una base vacía.
+- Añadir datos de ejemplo opcionales para desarrollo.
+- Completar README con instalación, configuración y ejecución.
+- Actualizar OpenAPI y todos los documentos afectados.
+- Registrar limitaciones conocidas y trabajo posterior.
+
+Criterio de salida:
+
+- Se puede crear o importar contenido, hacer un test, guardar y revisar el
+  resultado, y consultar estadísticas sin pasos manuales en la base de datos.
+- Compilaciones y pruebas automatizadas pasan.
+- Una persona nueva puede ejecutar el proyecto siguiendo README.md.
+
+
+14. POSPUESTO HASTA DESPUÉS DEL MVP
+
+- Guardar y reanudar tests en curso.
+- Autenticación y separación de usuarios.
+- Despliegue público.
+- Límite de tiempo.
+- Repetición guiada de fallos.
+- Gráficos de evolución temporal.
+- Notas en preguntas.
+- Recordatorios y objetivos.
+- Optimización basada en volúmenes que todavía no existen.
+
+
+15. CHECKLIST DE DEFINICIÓN DE TERMINADO POR ENTREGA
+
+[ ] Cumple los criterios de aceptación incluidos en la entrega.
+[ ] Backend y frontend compilan sin errores.
+[ ] Pruebas nuevas y existentes pasan.
+[ ] Errores esperados tienen un mensaje útil.
+[ ] No se han versionado secretos ni archivos generados innecesarios.
+[ ] La migración funciona si la entrega cambia el esquema.
+[ ] Se ha realizado una comprobación manual del recorrido.
+[ ] OpenAPI coincide con el comportamiento de la API.
+[ ] Documentación actualizada si hubo una decisión o cambio de contrato.
+[ ] El cambio está preparado para un commit pequeño y descriptivo.
+
+
+16. PRIMER PASO AL COMENZAR LA CODIFICACIÓN
+
+La implementación empezará por la Entrega 0. Antes de crear proyectos se
+inspeccionarán las versiones instaladas de .NET, Node.js, npm, Git y SQL Server.
+Si falta alguna herramienta, se explicará su función y se instalará únicamente
+con autorización del usuario.

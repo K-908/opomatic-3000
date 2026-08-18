@@ -1,0 +1,6 @@
+@OpoMatic3000.Api_HostAddress = http://localhost:5151
+
+GET {{OpoMatic3000.Api_HostAddress}}/health
+Accept: application/json
+
+###
