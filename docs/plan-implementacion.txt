@@ -23,7 +23,10 @@ ESTADO ACTUAL
   de restricciones sobre bases aisladas.
 - Entrega 3: completada el 20 de agosto de 2026. Incluye casos de uso, API y
   pantalla React para crear, listar, editar, desactivar y reactivar temas.
-- Siguiente entrega: Entrega 4, gestión manual de preguntas.
+- Entrega 4: completada el 20 de agosto de 2026. Incluye consulta paginada,
+  filtros, API y pantallas React para crear, buscar, editar, desactivar y
+  reactivar preguntas con exactamente cuatro opciones y una respuesta correcta.
+- Siguiente entrega: Entrega 5, importación JSON.
 
 El desglose ejecutable de cada entrega se mantiene en `tareas/README.md`.
 

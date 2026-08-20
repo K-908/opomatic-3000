@@ -5,14 +5,17 @@ detectar los temas con más dificultades.
 
 ## Situación actual
 
-Los bloques de fundamentos técnicos (T001-T006), base de datos (T010-T017) y
-gestión de temas (T020-T025) están completados. La aplicación dispone de gestión
-global de errores, persistencia mediante EF Core y SQL Server, y una API
-documentada para crear, consultar, editar, desactivar y reactivar temas.
+Los bloques de fundamentos técnicos (T001-T006), base de datos (T010-T017),
+gestión de temas (T020-T025) y gestión manual de preguntas (T030-T036) están
+completados. La aplicación dispone de gestión global de errores, persistencia
+mediante EF Core y SQL Server, y una API documentada para administrar temas y
+preguntas.
 
-La ruta `/topics` permite realizar todo ese flujo desde React sin recargar la
-página, con validaciones, confirmación de desactivación y estados de carga, vacío
-y error. El siguiente bloque implementará la gestión manual de preguntas.
+La ruta `/topics` permite administrar las materias. La ruta `/questions` permite
+buscar, filtrar, paginar, desactivar y reactivar el banco; `/questions/new` y
+`/questions/:id/edit` ofrecen el formulario de alta y edición con cuatro opciones
+y una única respuesta correcta. El siguiente bloque implementará la importación
+masiva desde JSON.
 
 ## Tecnologías previstas
 
@@ -133,5 +136,5 @@ red privada controlada y no debe exponerse públicamente a Internet.
 
 ## Próximo paso
 
-Comenzar la Entrega 4 de `docs/plan-implementacion.txt` con la tarea T030:
-implementar las consultas paginadas de preguntas.
+Comenzar la Entrega 5 de `docs/plan-implementacion.txt` con la tarea T040:
+definir y publicar el esquema de importación JSON.

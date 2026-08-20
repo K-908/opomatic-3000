@@ -33,4 +33,17 @@ public sealed class QuestionOption
     public byte Position { get; private set; }
 
     public bool IsCorrect { get; private set; }
+
+    internal void Update(string text, bool isCorrect)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(text);
+        var normalizedText = text.Trim();
+        if (normalizedText.Length > 1000)
+        {
+            throw new ArgumentOutOfRangeException(nameof(text), "Option text cannot exceed 1000 characters.");
+        }
+
+        Text = normalizedText;
+        IsCorrect = isCorrect;
+    }
 }

@@ -17,6 +17,11 @@ public sealed class Question
         ArgumentNullException.ThrowIfNull(topic);
         ArgumentException.ThrowIfNullOrWhiteSpace(statement);
 
+        if (statement.Trim().Length > 10000)
+        {
+            throw new ArgumentOutOfRangeException(nameof(statement), "Question statements cannot exceed 10000 characters.");
+        }
+
         if (createdAtUtc.Kind != DateTimeKind.Utc)
         {
             throw new ArgumentException("The date must be expressed in UTC.", nameof(createdAtUtc));
@@ -26,6 +31,7 @@ public sealed class Question
         ValidateOptions(optionList);
 
         Topic = topic;
+        TopicId = topic.Id;
         Statement = statement.Trim();
         IsActive = true;
         CreatedAtUtc = createdAtUtc;
@@ -52,6 +58,53 @@ public sealed class Question
     public DateTime UpdatedAtUtc { get; private set; }
 
     public IReadOnlyCollection<QuestionOption> Options => _options.AsReadOnly();
+
+    public void Update(
+        Topic topic,
+        string statement,
+        IEnumerable<QuestionOptionDefinition> options,
+        DateTime updatedAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(topic);
+        ArgumentException.ThrowIfNullOrWhiteSpace(statement);
+        if (statement.Trim().Length > 10000)
+        {
+            throw new ArgumentOutOfRangeException(nameof(statement), "Question statements cannot exceed 10000 characters.");
+        }
+        if (updatedAtUtc.Kind != DateTimeKind.Utc)
+        {
+            throw new ArgumentException("The date must be expressed in UTC.", nameof(updatedAtUtc));
+        }
+
+        var optionList = options?.ToArray() ?? throw new ArgumentNullException(nameof(options));
+        ValidateOptions(optionList);
+        if (_options.Count != 4)
+        {
+            throw new InvalidOperationException("The persisted question must contain exactly four options.");
+        }
+
+        Topic = topic;
+        TopicId = topic.Id;
+        Statement = statement.Trim();
+        foreach (var definition in optionList)
+        {
+            _options.Single(option => option.Position == definition.Position).Update(
+                definition.Text,
+                definition.IsCorrect);
+        }
+        UpdatedAtUtc = updatedAtUtc;
+    }
+
+    public void SetActive(bool isActive, DateTime updatedAtUtc)
+    {
+        if (updatedAtUtc.Kind != DateTimeKind.Utc)
+        {
+            throw new ArgumentException("The date must be expressed in UTC.", nameof(updatedAtUtc));
+        }
+
+        IsActive = isActive;
+        UpdatedAtUtc = updatedAtUtc;
+    }
 
     private static void ValidateOptions(IReadOnlyCollection<QuestionOptionDefinition> options)
     {

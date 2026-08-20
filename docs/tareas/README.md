@@ -21,7 +21,7 @@ cambie de forma efectiva.
 | Fundamentos técnicos | [01-fundamentos.md](01-fundamentos.md) | T001-T006 | Completado (6/6) |
 | Base de datos | [02-base-datos.md](02-base-datos.md) | T010-T017 | Completado (8/8) |
 | Gestión de temas | [03-temas.md](03-temas.md) | T020-T025 | Completado (6/6) |
-| Gestión de preguntas | [04-preguntas.md](04-preguntas.md) | T030-T036 | Pendiente |
+| Gestión de preguntas | [04-preguntas.md](04-preguntas.md) | T030-T036 | Completado (7/7) |
 | Importación JSON | [05-importacion-json.md](05-importacion-json.md) | T040-T045 | Pendiente |
 | Generación de tests | [06-generacion-tests.md](06-generacion-tests.md) | T050-T055 | Pendiente |
 | Realización y corrección | [07-realizacion-tests.md](07-realizacion-tests.md) | T060-T067 | Pendiente |
@@ -84,6 +84,6 @@ Una tarea se considera terminada cuando:
 
 ## Situación actual
 
-Los bloques de fundamentos técnicos, base de datos y gestión de temas están
-completados. La primera tarea pendiente es **T030 - Consultar preguntas desde
-Application**.
+Los bloques de fundamentos técnicos, base de datos, gestión de temas y gestión
+manual de preguntas están completados. La primera tarea pendiente es **T040 -
+Definir y publicar el esquema de importación**.

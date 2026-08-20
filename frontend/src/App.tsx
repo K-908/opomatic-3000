@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { getHealth, type HealthResponse } from './features/health/api/getHealth'
 import { TopicsPage } from './features/topics/TopicsPage'
+import { QuestionsPage } from './features/questions/QuestionsPage'
+import { QuestionFormPage } from './features/questions/QuestionFormPage'
 import './App.css'
 
 type HealthState =
@@ -9,6 +11,19 @@ type HealthState =
   | { status: 'unavailable' }
 
 function App() {
+  if (window.location.pathname === '/questions') {
+    return <QuestionsPage />
+  }
+
+  if (window.location.pathname === '/questions/new') {
+    return <QuestionFormPage />
+  }
+
+  const editMatch = window.location.pathname.match(/^\/questions\/(\d+)\/edit$/)
+  if (editMatch) {
+    return <QuestionFormPage questionId={Number(editMatch[1])} />
+  }
+
   if (window.location.pathname === '/topics') {
     return <TopicsPage />
   }
@@ -49,6 +64,9 @@ function HomePage() {
         <HealthStatus health={health} />
         <a className="primary-link" href="/topics">
           Administrar temas
+        </a>
+        <a className="primary-link" href="/questions">
+          Administrar preguntas
         </a>
       </section>
     </main>
