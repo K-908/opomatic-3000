@@ -5,16 +5,14 @@ detectar los temas con más dificultades.
 
 ## Situación actual
 
-El primer bloque de tareas de fundamentos técnicos, de T001 a T006, está
-completado. La Entrega 1 incluye gestión global de errores mediante Problem
-Details, CORS de desarrollo, un cliente HTTP tipado, pruebas automatizadas de
-backend y frontend, y la comunicación visible entre React y el endpoint
-`GET /health`.
+Los bloques de fundamentos técnicos (T001-T006) y base de datos (T010-T017)
+están completados. La aplicación dispone de gestión global de errores, CORS,
+cliente HTTP tipado, comunicación React -> API, entidades de dominio, mapeos de
+EF Core y una migración inicial aplicada sobre SQL Server.
 
-El siguiente bloque comenzará con T010 para incorporar Entity Framework Core,
-definir el modelo de datos y preparar la primera migración de SQL Server.
-Todavía no se ha implementado la persistencia ni ninguna funcionalidad del
-dominio.
+La persistencia y sus restricciones están probadas, pero todavía no existen
+casos de uso ni endpoints para gestionar datos desde la aplicación. El siguiente
+bloque implementará la gestión de temas.
 
 ## Tecnologías previstas
 
@@ -46,12 +44,34 @@ Desde la raíz del repositorio:
 
 ```powershell
 dotnet restore OpoMatic3000.sln
+dotnet tool restore
 Set-Location frontend
 npm.cmd install
 ```
 
 Se utiliza `npm.cmd` en los ejemplos de PowerShell porque algunos equipos
 bloquean la ejecución del wrapper `npm.ps1`.
+
+### Configurar SQL Server en desarrollo
+
+La base de datos local se llama `OpoMatic3000`. La configuración recomendada
+usa la instancia predeterminada de SQL Server en `localhost` y autenticación
+integrada de Windows. La cadena se guarda mediante .NET User Secrets y nunca en
+los archivos `appsettings`:
+
+```powershell
+dotnet user-secrets set "ConnectionStrings:OpoMatic3000" "Server=localhost;Database=OpoMatic3000;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True" --project backend/src/OpoMatic3000.Api/OpoMatic3000.Api.csproj
+```
+
+Si se utiliza SQL Server Express, una instancia con nombre o autenticación SQL,
+hay que sustituir el servidor y las credenciales de la cadena. Las contraseñas
+deben permanecer exclusivamente en User Secrets.
+
+Las pruebas de restricciones crean y eliminan bases aisladas cuyo nombre empieza
+por `OpoMatic3000_IntegrationTests_`. Por defecto usan `localhost` y autenticación
+integrada. Otro servidor de pruebas puede indicarse mediante la variable local
+`OPOMATIC_SQLSERVER_TEST_CONNECTION`, apuntando al catálogo `master`; nunca debe
+apuntar a una base con datos que deban conservarse.
 
 ## Ejecutar en desarrollo
 
@@ -113,6 +133,5 @@ red privada controlada y no debe exponerse públicamente a Internet.
 
 ## Próximo paso
 
-Comenzar la Entrega 2 de `docs/plan-implementacion.txt` con la tarea T010:
-añadir Entity Framework Core para preparar el modelo de datos y la primera
-migración de SQL Server.
+Comenzar la Entrega 3 de `docs/plan-implementacion.txt` con la tarea T020:
+implementar la creación de temas en el backend.

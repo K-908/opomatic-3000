@@ -18,7 +18,10 @@ ESTADO ACTUAL
 - Entrega 1: completada el 18 de agosto de 2026. Incluye Problem Details, CORS
   de desarrollo, cliente HTTP tipado, comunicación visible React -> API y
   pruebas automatizadas de frontend e integración.
-- Siguiente entrega: Entrega 2, modelo de datos y migración inicial.
+- Entrega 2: completada el 18 de agosto de 2026. Incluye entidades de dominio,
+  mapeos de EF Core, conexión segura a SQL Server, migración inicial y pruebas
+  de restricciones sobre bases aisladas.
+- Siguiente entrega: Entrega 3, gestión de temas.
 
 El desglose ejecutable de cada entrega se mantiene en `tareas/README.md`.
 

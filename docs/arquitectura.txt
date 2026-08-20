@@ -29,6 +29,9 @@ Backend:
 - Controladores HTTP para que rutas, contratos y códigos de respuesta sean
   explícitos durante el aprendizaje.
 - Entity Framework Core 10 con el proveedor oficial para SQL Server.
+- Versiones de persistencia resueltas: Microsoft.EntityFrameworkCore 10.0.11,
+  Microsoft.EntityFrameworkCore.SqlServer 10.0.11,
+  Microsoft.EntityFrameworkCore.Design 10.0.11 y dotnet-ef 10.0.11.
 - Migraciones de EF Core para versionar el esquema.
 - OpenAPI y una interfaz Swagger disponibles en desarrollo.
 - ASP.NET Core Data Protection para proteger el token temporal del test.

@@ -6,7 +6,7 @@ Entity Framework Core y una migración reproducible sobre SQL Server.
 Documentos de referencia: `../diseno-base-datos.txt` completo y
 `../arquitectura.txt`, secciones 5, 10 y 13.
 
-## [ ] T010 - Añadir Entity Framework Core
+## [x] T010 - Añadir Entity Framework Core
 
 **Depende de:** T006.
 
@@ -23,7 +23,19 @@ Documentos de referencia: `../diseno-base-datos.txt` completo y
 **Comprobación:** restauración y compilación limpias; `dotnet ef --version`
 funciona.
 
-## [ ] T011 - Crear las entidades del banco de preguntas
+**Cierre — 2026-08-18**
+
+- Implementado: EF Core y proveedor SQL Server 10.0.11 añadidos a
+  Infrastructure, herramientas de diseño 10.0.11 en el proyecto de inicio API;
+  `dotnet-ef` 10.0.11 registrado como herramienta local reproducible.
+- Verificación: `dotnet restore OpoMatic3000.sln` — OK;
+  `dotnet build OpoMatic3000.sln --no-restore` — OK, sin avisos;
+  `dotnet test OpoMatic3000.sln --no-restore` — OK, 9/9 pruebas;
+  `dotnet ef --version` — OK, 10.0.11.
+- Documentación: versiones registradas en `docs/arquitectura.txt` y restauración
+  de herramientas añadida a `README.md`.
+
+## [x] T011 - Crear las entidades del banco de preguntas
 
 **Depende de:** T010.
 
@@ -39,7 +51,15 @@ funciona.
 **Comprobación:** Domain no referencia EF Core y las entidades permiten expresar
 un tema con preguntas y exactamente cuatro opciones.
 
-## [ ] T012 - Crear las entidades históricas
+**Cierre — 2026-08-18**
+
+- Implementado: entidades `Topic`, `Question` y `QuestionOption` sin dependencia
+  de EF Core, con colecciones controladas, fechas UTC y construcción válida de
+  cuatro opciones con una única respuesta correcta.
+- Verificación: `dotnet test backend/tests/OpoMatic3000.UnitTests/OpoMatic3000.UnitTests.csproj --no-restore --filter FullyQualifiedName~TopicTests` — OK, 5/5 pruebas.
+- Documentación: tarea e índice de progreso actualizados.
+
+## [x] T012 - Crear las entidades históricas
 
 **Depende de:** T011.
 
@@ -56,7 +76,15 @@ un tema con preguntas y exactamente cuatro opciones.
 **Comprobación:** el modelo puede conservar un intento completo sin depender de
 que posteriormente cambien los textos actuales.
 
-## [ ] T013 - Crear DbContext y configurar el banco de preguntas
+**Cierre — 2026-08-18**
+
+- Implementado: agregado histórico con intento, temas, preguntas, opciones,
+  snapshots, `SubmissionId`, versión de puntuación, contadores y
+  `QuestionResult`.
+- Verificación: `dotnet test backend/tests/OpoMatic3000.UnitTests/OpoMatic3000.UnitTests.csproj --no-restore --filter FullyQualifiedName~TestAttemptTests` — OK, 3/3 pruebas.
+- Documentación: tarea e índice de progreso actualizados.
+
+## [x] T013 - Crear DbContext y configurar el banco de preguntas
 
 **Depende de:** T011.
 
@@ -74,7 +102,15 @@ que posteriormente cambien los textos actuales.
 **Comprobación:** el modelo de EF se construye sin advertencias y refleja todas
 las restricciones descritas para las tres tablas.
 
-## [ ] T014 - Configurar el histórico de intentos
+**Cierre — 2026-08-18**
+
+- Implementado: `OpoMatic3000DbContext` y mapeos Fluent API de Topics,
+  Questions y QuestionOptions con claves, longitudes, checks, índices,
+  collation y borrado restrictivo.
+- Verificación: `dotnet test backend/tests/OpoMatic3000.IntegrationTests/OpoMatic3000.IntegrationTests.csproj --no-restore --filter FullyQualifiedName~QuestionBankModelTests` — OK, 3/3 pruebas.
+- Documentación: tarea e índice de progreso actualizados.
+
+## [x] T014 - Configurar el histórico de intentos
 
 **Depende de:** T012 y T013.
 
@@ -91,7 +127,15 @@ las restricciones descritas para las tres tablas.
 **Comprobación:** el modelo impide duplicar pregunta, tema u orden dentro del
 mismo intento.
 
-## [ ] T015 - Configurar SQL Server e inyección de dependencias
+**Cierre — 2026-08-18**
+
+- Implementado: mapeos de las cuatro tablas históricas con snapshots, precisión
+  de nota, checks, unicidades, claves compuestas y cascadas limitadas al detalle
+  propiedad del intento.
+- Verificación: `dotnet test backend/tests/OpoMatic3000.IntegrationTests/OpoMatic3000.IntegrationTests.csproj --no-restore --filter FullyQualifiedName~HistoricalModelTests` — OK, 3/3 pruebas.
+- Documentación: tarea e índice de progreso actualizados.
+
+## [x] T015 - Configurar SQL Server e inyección de dependencias
 
 **Depende de:** T014.
 
@@ -108,7 +152,17 @@ mismo intento.
 **Comprobación:** la API arranca con una conexión válida y falla con un mensaje
 diagnosticable cuando falta la configuración.
 
-## [ ] T016 - Crear la migración inicial
+**Cierre — 2026-08-18**
+
+- Implementado: registro de `OpoMatic3000DbContext` desde Infrastructure,
+  conexión `OpoMatic3000` mediante User Secrets, autenticación integrada y
+  logging sin datos sensibles; configuración local documentada.
+- Verificación: pruebas `InfrastructureConfigurationTests` — OK, 2/2; prueba
+  `HealthEndpointTests` — OK, la API arranca con la configuración válida.
+- Documentación: instrucciones de SQL Server y User Secrets añadidas a
+  `README.md`; tarea e índice actualizados.
+
+## [x] T016 - Crear la migración inicial
 
 **Depende de:** T015.
 
@@ -124,7 +178,16 @@ diagnosticable cuando falta la configuración.
 **Comprobación:** `dotnet ef database update` crea todas las tablas sin cambios
 manuales en SQL Server.
 
-## [ ] T017 - Probar restricciones reales de SQL Server
+**Cierre — 2026-08-18**
+
+- Implementado: migración `InitialCreate` con siete tablas, claves, relaciones,
+  checks, índices, tipos y snapshot de EF Core.
+- Verificación: `dotnet ef database update` — OK sobre una base nueva;
+  `dotnet ef database update 0` — OK; reaplicación de `database update` — OK.
+- Documentación: tarea e índice de progreso actualizados; la base local
+  `OpoMatic3000` queda creada y actualizada.
+
+## [x] T017 - Probar restricciones reales de SQL Server
 
 **Depende de:** T016.
 
@@ -140,3 +203,15 @@ manuales en SQL Server.
 
 **Comprobación:** cada estado inválido previsto provoca la restricción esperada
 y las pruebas no afectan a la base de desarrollo.
+
+**Cierre — 2026-08-18**
+
+- Implementado: pruebas contra bases SQL Server aisladas para nombres de tema,
+  relación intento-tema, posición de opción, `SubmissionId`, contadores y nota;
+  creación y limpieza deterministas con protección por prefijo.
+- Verificación: pruebas `SqlServerConstraintTests` — OK, 5/5;
+  `dotnet build OpoMatic3000.sln --no-restore` — OK, sin avisos;
+  `dotnet test OpoMatic3000.sln --no-build --no-restore` — OK, 30/30 pruebas;
+  `dotnet ef migrations has-pending-model-changes` — OK, sin cambios.
+- Documentación: configuración de la base de pruebas añadida a `README.md`;
+  tarea, índice y plan de implementación actualizados.
