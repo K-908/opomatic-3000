@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpoMatic3000.Application.Topics;
 using OpoMatic3000.Infrastructure.Persistence;
+using OpoMatic3000.Infrastructure.Topics;
 
 namespace OpoMatic3000.Infrastructure;
 
@@ -26,6 +28,7 @@ public static class DependencyInjection
             options
                 .UseSqlServer(connectionString)
                 .EnableSensitiveDataLogging(false));
+        services.AddScoped<ITopicRepository, TopicRepository>();
 
         return services;
     }

@@ -57,4 +57,23 @@ public sealed class TopicTests
 
         Assert.Throws<ArgumentException>(() => topic.AddQuestion("Question?", options, UtcNow));
     }
+
+    [Fact]
+    public void Available_questions_follow_the_topic_status_without_changing_questions()
+    {
+        var topic = new Topic("Topic 1", UtcNow);
+        var options = Enumerable.Range(1, 4)
+            .Select(position => new QuestionOptionDefinition(
+                $"Option {position}",
+                (byte)position,
+                position == 1));
+        var question = topic.AddQuestion("Question?", options, UtcNow);
+
+        topic.SetActive(false, UtcNow.AddMinutes(1));
+        Assert.Empty(topic.GetAvailableQuestions());
+        Assert.True(question.IsActive);
+
+        topic.SetActive(true, UtcNow.AddMinutes(2));
+        Assert.Same(question, Assert.Single(topic.GetAvailableQuestions()));
+    }
 }

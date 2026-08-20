@@ -72,3 +72,11 @@ h1 {
   background: currentColor;
   box-shadow: 0 0 0 0.25rem color-mix(in srgb, currentColor 12%, transparent);
 }
+
+.primary-link {
+  display: block;
+  width: fit-content;
+  margin-top: 1.5rem;
+  color: var(--accent-color);
+  font-weight: 750;
+}

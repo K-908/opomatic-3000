@@ -21,7 +21,9 @@ ESTADO ACTUAL
 - Entrega 2: completada el 18 de agosto de 2026. Incluye entidades de dominio,
   mapeos de EF Core, conexión segura a SQL Server, migración inicial y pruebas
   de restricciones sobre bases aisladas.
-- Siguiente entrega: Entrega 3, gestión de temas.
+- Entrega 3: completada el 20 de agosto de 2026. Incluye casos de uso, API y
+  pantalla React para crear, listar, editar, desactivar y reactivar temas.
+- Siguiente entrega: Entrega 4, gestión manual de preguntas.
 
 El desglose ejecutable de cada entrega se mantiene en `tareas/README.md`.
 

@@ -29,6 +29,11 @@ public sealed class Topic
 
     public IReadOnlyCollection<Question> Questions => _questions.AsReadOnly();
 
+    public IReadOnlyCollection<Question> GetAvailableQuestions() =>
+        IsActive
+            ? _questions.Where(question => question.IsActive).ToArray()
+            : [];
+
     public Question AddQuestion(
         string statement,
         IEnumerable<QuestionOptionDefinition> options,
@@ -57,7 +62,9 @@ public sealed class Topic
     private static string NormalizeName(string name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var normalizedName = name.Trim();
+        var normalizedName = string.Join(' ', name.Split(
+            (char[]?)null,
+            StringSplitOptions.RemoveEmptyEntries));
 
         if (normalizedName.Length > 150)
         {

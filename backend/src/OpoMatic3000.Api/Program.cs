@@ -1,5 +1,6 @@
 using OpoMatic3000.Api.Configuration;
 using OpoMatic3000.Api.ErrorHandling;
+using OpoMatic3000.Application.Topics;
 using OpoMatic3000.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddApiProblemDetails();
 builder.Services.AddApiCors(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<TopicService>();
 
 var app = builder.Build();
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getHealth, type HealthResponse } from './features/health/api/getHealth'
+import { TopicsPage } from './features/topics/TopicsPage'
 import './App.css'
 
 type HealthState =
@@ -8,6 +9,14 @@ type HealthState =
   | { status: 'unavailable' }
 
 function App() {
+  if (window.location.pathname === '/topics') {
+    return <TopicsPage />
+  }
+
+  return <HomePage />
+}
+
+function HomePage() {
   const [health, setHealth] = useState<HealthState>({ status: 'loading' })
 
   useEffect(() => {
@@ -34,10 +43,13 @@ function App() {
         <p className="eyebrow">OpoMatic-3000</p>
         <h1 id="welcome-title">Tu preparación, pregunta a pregunta.</h1>
         <p className="welcome-copy">
-          El frontend de la aplicación está preparado. En la siguiente entrega
-          comenzaremos a trabajar con la base de datos.
+          Organiza tus materias y construye un banco de preguntas para preparar
+          cada test con intención.
         </p>
         <HealthStatus health={health} />
+        <a className="primary-link" href="/topics">
+          Administrar temas
+        </a>
       </section>
     </main>
   )
